@@ -25,6 +25,7 @@ export default function Home() {
       setError(prediction.detail);
       return;
     }
+    console.log('prediction @ handleSubmit 201 :>> ', prediction);
     setPrediction(prediction);
 
     while (
@@ -38,6 +39,7 @@ export default function Home() {
         setError(prediction.detail);
         return;
       }
+      console.log('prediction @ handleSubmit 200 :>> ', prediction);
       console.log({ prediction })
       setPrediction(prediction);
     }
