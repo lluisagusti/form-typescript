@@ -18,8 +18,8 @@
 # misc
 .DS_Store
 *.pem
-.vscode
-.github
+/.vscode
+/.github
 
 # debug
 npm-debug.log*
