@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import Head from "next/head";
 import Image from "next/image";
@@ -9,6 +10,8 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export default function Home() {
 
   const [formData, setFormData] = useState({ task: "", image: "", question: "" });
+  const [file, setFile] = useState<File>()
+  const [filePath, setFilePath] = useState<string>("")
   const [prediction, setPrediction] = useState<Prediction | null>(null);
   const [blipPrediction, setBlipPrediction] = useState<Prediction | null>(null);
   const [error, setError] = useState(null);
@@ -54,9 +57,8 @@ export default function Home() {
     );
 
     const preReq = new FormData();
-    preReq.append('task', formData?.task);
+    preReq.append('task', 'visual_question_answering');
     preReq.append('image', 'https://replicate.delivery/pbxt/KSaykYnRdE6r9lbO5qjW3ERhOTsQaFRYKIugg9GpxlUdJq7Y/valerie-vomit.jpg');
-    // preReq.append('image', formData?.image);
     preReq.append('question', formData?.question);
 
     const response = await fetch("/api/vision", {
@@ -84,12 +86,115 @@ export default function Home() {
       }
       setBlipPrediction(blipPrediction);
     }
+  }
 
-     
-};
+  const onSubmitFile = async (e:React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!file) return
+
+    try {
+      const data = new FormData()
+      data.set('file', file)
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: data
+      })
+
+      let uploadPath = await res.json();
+      uploadPath?.path && setFilePath(uploadPath.path)
+      if(!res.ok) throw new Error(await res.text())
+      
+    } catch (error: any) {
+      console.error(error)
+    }
+  }
+
 
   return (
     <main className="flex min-h-screen flex-col items-center p-4 justify-center bg-gray-100">
+  
+      {/* UPLOAD FILE DIV */}
+      <div className="flex flex-col z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex bg-white p-10 border-solid border-2 border-gray-300 rounded-3xl">
+        <p className="mb-4 text-lg text-gray-700">
+        Upload File{" "}
+          <a href="https://nextjs.org/docs" className="text-blue-500 hover:underline">
+            Next.js
+          </a>:
+        </p>
+
+        <form onSubmit={onSubmitFile} className="flex flex-col items-center w-full">
+          <input
+            type="file"
+            name="file"
+            onChange={(e) => setFile(e.target.files?.[0])}
+          />
+          <button
+            type="submit"
+            className="px-4 py-2 mt-4 w-full bg-blue-500 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            Upload
+          </button>
+        </form>
+
+        {filePath?.length > 3 && (
+          <div className="mt-4">
+              <div className="flex flex-col text-black items-center justify-center w-full">
+                <Image
+                  src={filePath?.toString()}
+                  alt="output"
+                  width={500}
+                  height={500}
+                  className="object-cover w-full h-full rounded-md border-gray-300"
+                />
+              </div>
+            <p className="mt-4 text-xs text-gray-700">status: uploaded at: {filePath}</p>
+          </div>
+        )}
+      </div>
+
+
+      {/* BLIP DIV */}
+      <div className="flex flex-col pt-10 z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex bg-white p-10 border-solid border-2 border-gray-300 rounded-3xl">
+        <p className="mb-4 text-lg text-gray-700">
+          Get data with{" "}
+          <a href="https://replicate.com/salesforce/blip" className="text-blue-500 hover:underline">
+            Blip
+          </a>:
+        </p>
+
+        <form onSubmit={handleSubmitBlipForm} className="flex flex-col items-center w-full">
+          <input
+            type="text"
+            name="question"
+            placeholder="Question"
+            onChange={handleBlipFormData}
+            className="px-4 py-2 text-black w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            type="submit"
+            className="px-4 py-2 mt-4 w-full bg-blue-500 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            Read
+          </button>
+        </form>
+
+        {/* {error && <div className="mt-4 text-red-500">{error}</div>} */}
+
+        {blipPrediction && (
+          <div className="mt-4">
+            {blipPrediction?.output && (
+              <div className="flex flex-col text-black items-center justify-center w-full">
+                {blipPrediction?.output}
+              </div>
+            )}
+            <p className="mt-4 text-xs text-gray-700">status: {blipPrediction.status}</p>
+          </div>
+        )}
+      </div>
+
+      
+      {/* STABLE DIFFUSION DIV */}
       <div className="flex flex-col b-10 z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex bg-white p-10 border-solid border-2 border-gray-300 rounded-3xl">
         <Head>
           <title>Replicate + Next.js</title>
@@ -113,26 +218,9 @@ export default function Home() {
             type="submit"
             className="px-4 py-2 mt-4 w-full bg-blue-500 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            Go!
+            Generate
           </button>
         </form>
-
-      {/* <form onSubmit={onSubmit}>
-        <div>
-          <label>First Name</label>
-          <input {...register("firstName")} placeholder="Kotaro" className="px-4 py-2 text-black w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          {errors?.firstName && <p>{errors.firstName.message}</p>}
-        </div>
-
-        <div>
-          <label>Last Name</label>
-          <input {...register("lastName")} placeholder="Sugawara" className="px-4 py-2 text-black w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </div>
-
-        <input type="submit" 
-        className="px-4 py-2 mt-4 w-full bg-blue-500 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </form> */}
 
         {error && <div className="mt-4 text-red-500">{error}</div>}
 
@@ -149,55 +237,11 @@ export default function Home() {
                 />
               </div>
             )}
-            <p className="mt-4 text-lg text-gray-700">status: {prediction.status}</p>
+            <p className="mt-4 text-xs text-gray-700">status: {prediction.status}</p>
           </div>
         )}
       </div>
-      
-      <div className="flex flex-col z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex bg-white p-10 border-solid border-2 border-gray-300 rounded-3xl">
-        <p className="mb-4 text-lg text-gray-700">
-          Get data with{" "}
-          <a href="https://replicate.com/stability-ai/stable-diffusion" className="text-blue-500 hover:underline">
-            Blip
-          </a>:
-        </p>
 
-        <form onSubmit={handleSubmitBlipForm} className="flex flex-col items-center w-full">
-          <input
-            type="text"
-            name="task"
-            placeholder="Task"
-            onChange={handleBlipFormData}
-            className="px-4 py-2 text-black w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <input
-            type="text"
-            name="question"
-            placeholder="Question"
-            onChange={handleBlipFormData}
-            className="px-4 py-2 text-black w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <button
-            type="submit"
-            className="px-4 py-2 mt-4 w-full bg-blue-500 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            Go!
-          </button>
-        </form>
-
-        {error && <div className="mt-4 text-red-500">{error}</div>}
-
-        {blipPrediction && (
-          <div className="mt-4">
-            {blipPrediction?.output && (
-              <div className="flex flex-col text-black items-center justify-center w-full">
-                {blipPrediction?.output}
-              </div>
-            )}
-            <p className="mt-4 text-lg text-gray-700">status: {blipPrediction.status}</p>
-          </div>
-        )}
-      </div>
     </main>
   )
 }
