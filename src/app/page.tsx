@@ -1,20 +1,23 @@
 "use client";
 
-import { useState } from "react";
-import Head from "next/head";
-import Image from "next/image";
-import { Prediction } from "replicate";
+import { useState } from "react"
+import Head from "next/head"
+import Image from "next/image"
+import { Prediction } from "replicate"
+import { VisionFormData } from "./types";
+import { sleep } from "./utils/utils";
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 
 export default function Home() {
 
-  const [formData, setFormData] = useState({ task: "", image: "", question: "" });
   const [file, setFile] = useState<File>()
-  const [filePath, setFilePath] = useState<string>("")
-  const [prediction, setPrediction] = useState<Prediction | null>(null);
-  const [blipPrediction, setBlipPrediction] = useState<Prediction | null>(null);
-  const [error, setError] = useState(null);
+  const [generationError, setGenerationError] = useState(null)
+  const [formData, setFormData] = useState<VisionFormData>({ image: "", prompt: "", max_tokens: 1024, temperature: 0.2, top_p: 1 });
+  const [prediction, setPrediction] = useState<Prediction | null>(null)
+  const [filePath, setFilePath] = useState<string | null>(null)
+  const [visionResponse, setVisionResponse] = useState<string | null>(null)
+
 
   const handleSubmitSDXLForm = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -26,7 +29,7 @@ export default function Home() {
 
     let prediction = await response.json();
     if (response.status !== 201) {
-      setError(prediction.detail);
+      setGenerationError(prediction.detail);
       return;
     }
     setPrediction(prediction);
@@ -39,53 +42,38 @@ export default function Home() {
       const response = await fetch("/api/predictions/" + prediction.id, { cache: 'no-store' });
       prediction = await response.json();
       if (response.status !== 200) {
-        setError(prediction.detail);
+        setGenerationError(prediction.detail);
         return;
       }
       setPrediction(prediction);
     }
-  };
+  }
 
-  const handleBlipFormData = async (e: any) => {
+  const handleVisionFormData = async (e: any) => {
     const { name, value } = e.target;
     setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
   }
 
-  const handleSubmitBlipForm = async (e: { preventDefault: () => void; }) => {
-    e.preventDefault();
-    console.log(`Task: ${formData.task}, Image: ${formData.image}, Question: ${formData.question}`
-    );
+  const handleSubmitVisionForm = async (e: { preventDefault: () => void; }) => {
+    e.preventDefault()
 
-    const preReq = new FormData();
-    preReq.append('task', 'visual_question_answering');
-    preReq.append('image', 'https://replicate.delivery/pbxt/KSaykYnRdE6r9lbO5qjW3ERhOTsQaFRYKIugg9GpxlUdJq7Y/valerie-vomit.jpg');
-    preReq.append('question', formData?.question);
+    const data = new FormData()
+    data.append('image', 'https://replicate.delivery/pbxt/KSvbd6jO4nZIP5JCyhV6Dvf440hbmtocuQtPbp9pGJezFAzO/IMG_4652%20-%20restored.jpg')
+    data.append('prompt', formData?.prompt) // Hair and eyes color. Response: "Hair: [hair color]. Eyes: [eyes color]"
 
-    const response = await fetch("/api/vision", {
+    const response: any = await fetch("/api/vision", {
       method: "POST",
-      body: preReq,
-    });
+      body: data,
+    })
 
-    let blipPrediction = await response.json();
+    let visionPrediction = await response.json()
     if (response.status !== 201) {
-      setError(blipPrediction.detail);
-      return;
+      setVisionResponse("no result")
+      return
     }
-    setBlipPrediction(prediction);
 
-    while (
-      blipPrediction.status !== "succeeded" &&
-      blipPrediction.status !== "failed"
-    ) {
-      await sleep(1000);
-      const response = await fetch("/api/predictions/" + blipPrediction?.id, { cache: 'no-store' });
-      blipPrediction = await response.json();
-      if (response.status !== 200) {
-        setError(blipPrediction.detail);
-        return;
-      }
-      setBlipPrediction(blipPrediction);
-    }
+    setVisionResponse(visionPrediction.detail.join(""))
+    return
   }
 
   const onSubmitFile = async (e:React.FormEvent<HTMLFormElement>) => {
@@ -114,8 +102,8 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center p-4 justify-center bg-gray-100">
   
-      {/* UPLOAD FILE DIV */}
-      <div className="flex flex-col z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex bg-white p-10 border-solid border-2 border-gray-300 rounded-3xl">
+      {/* UPLOAD FILE */}
+      <div className="flex flex-col z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex p-10">
         <p className="mb-4 text-lg text-gray-700">
         Upload File{" "}
           <a href="https://nextjs.org/docs" className="text-blue-500 hover:underline">
@@ -123,7 +111,7 @@ export default function Home() {
           </a>:
         </p>
 
-        <form onSubmit={onSubmitFile} className="flex flex-col items-center w-full">
+        <form onSubmit={onSubmitFile} className="flex flex-col items-center w-full text-black">
           <input
             type="file"
             name="file"
@@ -137,7 +125,7 @@ export default function Home() {
           </button>
         </form>
 
-        {filePath?.length > 3 && (
+        {filePath?.length && (
           <div className="mt-4">
               <div className="flex flex-col text-black items-center justify-center w-full">
                 <Image
@@ -154,48 +142,46 @@ export default function Home() {
       </div>
 
 
-      {/* BLIP DIV */}
-      <div className="flex flex-col pt-10 z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex bg-white p-10 border-solid border-2 border-gray-300 rounded-3xl">
+      {/* VISION */}
+      <div className="flex flex-col pt-10 z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex p-10">
         <p className="mb-4 text-lg text-gray-700">
           Get data with{" "}
-          <a href="https://replicate.com/salesforce/blip" className="text-blue-500 hover:underline">
-            Blip
+          <a href="https://replicate.com/salesforce/vision" className="text-blue-500 hover:underline">
+            Vision
           </a>:
         </p>
 
-        <form onSubmit={handleSubmitBlipForm} className="flex flex-col items-center w-full">
+        <form onSubmit={handleSubmitVisionForm} className="flex flex-col items-center w-full">
           <input
             type="text"
-            name="question"
-            placeholder="Question"
-            onChange={handleBlipFormData}
+            name="prompt"
+            placeholder="Prompt"
+            onChange={handleVisionFormData}
             className="px-4 py-2 text-black w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button
             type="submit"
             className="px-4 py-2 mt-4 w-full bg-blue-500 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            Read
+            Ask
           </button>
         </form>
 
-        {/* {error && <div className="mt-4 text-red-500">{error}</div>} */}
-
-        {blipPrediction && (
+        {visionResponse && (
           <div className="mt-4">
-            {blipPrediction?.output && (
+            {visionResponse?.length && (
               <div className="flex flex-col text-black items-center justify-center w-full">
-                {blipPrediction?.output}
+                {visionResponse}
               </div>
             )}
-            <p className="mt-4 text-xs text-gray-700">status: {blipPrediction.status}</p>
+            <p className="mt-4 text-xs text-gray-700">status: success</p>
           </div>
         )}
       </div>
 
       
-      {/* STABLE DIFFUSION DIV */}
-      <div className="flex flex-col b-10 z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex bg-white p-10 border-solid border-2 border-gray-300 rounded-3xl">
+      {/* STABLE DIFFUSION */}
+      <div className="flex flex-col b-10 z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex p-10">
         <Head>
           <title>Replicate + Next.js</title>
         </Head>
@@ -222,7 +208,7 @@ export default function Home() {
           </button>
         </form>
 
-        {error && <div className="mt-4 text-red-500">{error}</div>}
+        {generationError && <div className="mt-4 text-red-500">{generationError}</div>}
 
         {prediction && (
           <div className="mt-4">
