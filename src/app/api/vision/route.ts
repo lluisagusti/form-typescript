@@ -14,8 +14,12 @@ export async function POST(req: Request) {
   }
 
   const prediction = await replicate.predictions.create({
-    version: "8beff3369e81422112d93b89ca01426147de542cd4684c244b673b105188fe5f",
-    input: { prompt: data.get("prompt") },
+    version: "2e1dddc8621f72155f24cf2e0adbde548458d3cab9f00c0139eea840d0ac4746",
+    input: {
+      task: data.get("task"),
+      image: data.get("image"),
+      question: data.get("question")
+    },
   });
 
   if (prediction?.error) {
