@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react"
-import Head from "next/head"
 import Image from "next/image"
 import { Prediction } from "replicate"
 import { VisionFormData } from "./types";
 import { sleep } from "./utils/utils";
-
+import UploadComponent from "./components/upload";
 
 
 export default function Home() {
@@ -22,7 +21,7 @@ export default function Home() {
   const handleSubmitSDXLForm = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const response = await fetch("/api/predictions", {
+    const response = await fetch("/api/bluepencilxl", {
       method: "POST",
       body: new FormData(e.currentTarget),
     });
@@ -61,7 +60,7 @@ export default function Home() {
     data.append('image', 'https://replicate.delivery/pbxt/KSvbd6jO4nZIP5JCyhV6Dvf440hbmtocuQtPbp9pGJezFAzO/IMG_4652%20-%20restored.jpg')
     data.append('prompt', formData?.prompt) // Hair and eyes color. Response: "Hair: [hair color]. Eyes: [eyes color]"
 
-    const response: any = await fetch("/api/vision", {
+    const response: any = await fetch("/api/llava16vicuna7b", {
       method: "POST",
       body: data,
     })
@@ -101,14 +100,16 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen flex-col items-center p-4 justify-center bg-gray-100">
+
+      <UploadComponent />
   
-      {/* UPLOAD FILE */}
+      {/* UPLOAD FILE (S3 NEEDED) */}
       <div className="flex flex-col z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex p-10">
         <p className="mb-4 text-lg text-gray-700">
-        Upload File{" "}
+        Upload File (
           <a href="https://nextjs.org/docs" className="text-blue-500 hover:underline">
             Next.js
-          </a>:
+          </a>)
         </p>
 
         <form onSubmit={onSubmitFile} className="flex flex-col items-center w-full text-black">
@@ -136,19 +137,22 @@ export default function Home() {
                   className="object-cover w-full h-full rounded-md border-gray-300"
                 />
               </div>
-            <p className="mt-4 text-xs text-gray-700">status: uploaded at: {filePath}</p>
+              <div className="flex flex-col text-black items-center justify-center w-full">
+              url: {filePath}
+              <p className="mt-4 text-xs text-gray-700">status: success</p>
+            </div>
           </div>
         )}
       </div>
 
 
-      {/* VISION */}
+      {/* VISION: llava-v1.6-vicuna-7b */}
       <div className="flex flex-col pt-10 z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex p-10">
         <p className="mb-4 text-lg text-gray-700">
-          Get data with{" "}
-          <a href="https://replicate.com/salesforce/vision" className="text-blue-500 hover:underline">
-            Vision
-          </a>:
+          Ask to image (
+          <a href="https://replicate.com/yorickvp/llava-v1.6-vicuna-7b" className="text-blue-500 hover:underline">
+          llava-v1.6-vicuna-7b
+          </a>)
         </p>
 
         <form onSubmit={handleSubmitVisionForm} className="flex flex-col items-center w-full">
@@ -180,17 +184,13 @@ export default function Home() {
       </div>
 
       
-      {/* STABLE DIFFUSION */}
+      {/* IMAGE GENERATION OR IMG2IMG */}
       <div className="flex flex-col b-10 z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex p-10">
-        <Head>
-          <title>Replicate + Next.js</title>
-        </Head>
-
         <p className="mb-4 text-lg text-gray-700">
-          Generate with{" "}
+          Generate (
           <a href="https://replicate.com/stability-ai/stable-diffusion" className="text-blue-500 hover:underline">
             SDXL
-          </a>:
+          </a>)
         </p>
 
         <form onSubmit={handleSubmitSDXLForm} className="flex flex-col items-center w-full">
