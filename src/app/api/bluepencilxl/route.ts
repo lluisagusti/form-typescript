@@ -15,9 +15,11 @@ export async function POST(req: Request) {
   }
 
   const input = {
-    image: "https://replicate.delivery/pbxt/KSvbd6jO4nZIP5JCyhV6Dvf440hbmtocuQtPbp9pGJezFAzO/IMG_4652%20-%20restored.jpg",
+    // image: "https://replicate.delivery/pbxt/KSvbd6jO4nZIP5JCyhV6Dvf440hbmtocuQtPbp9pGJezFAzO/IMG_4652%20-%20restored.jpg",
     prompt: prompt
   }
+
+  console.log('PROMPT @ API >>>>>>>>>>>>>>>>>>>> ', input)
 
   const prediction = await replicate.predictions.create({
     version: "06db33e3cd56700e2b0de541e65e2fc377604bebc97eb87b40e1d190fafa7ef4",

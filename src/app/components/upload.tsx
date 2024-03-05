@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 
-const UploadForm = () => {
+const UploadForm = ({ urlString }: any) => {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -28,42 +28,41 @@ const UploadForm = () => {
       });
 
       const data: any = await response.json();
-      console.log('UploadForm 2 >> ', data);
-      data?.url ?? console.log('data.url >> ', data.url);
       const { url } = data
-      console.log('url :>> ', url);
       setImageUrl(url)
       setUploading(false);
+      urlString(url)
     } catch (error) {
       console.log(error);
       setUploading(false);
     }
-  }
+  }  
 
   return (
     <>
-      <h1>Upload Files to S3 Bucket</h1>
+      {/* <h1 className="text-black">Upload Files to S3 Bucket</h1> */}
 
-      <form onSubmit={handleSubmit}>
+      {!imageUrl?.length && (<form onSubmit={handleSubmit} className="text-black p-5">
         <input type="file" accept="image/*" onChange={handleFileChange} />
-        <button type="submit" disabled={!file || uploading}>
+        <button className="ui button" type="submit" disabled={!file || uploading}>
           {uploading ? "Uploading..." : "Upload"}
         </button>
-      </form>
+      </form>)}
+
       {imageUrl?.length && (
-          <div className="mt-4">
-              <div className="flex flex-col text-black items-center justify-center w-full">
+          <div className="mt-4, text-black">
+              <div className="flex flex-col items-center justify-center w-full">
                 <Image
                   src={imageUrl?.toString()}
                   alt="output"
-                  width={500}
-                  height={500}
+                  width={250}
+                  height={250}
                   className="object-cover w-full h-full rounded-md border-gray-300"
                 />
               </div>
-              <div className="flex flex-col text-black items-center justify-center w-full">
+              <div className="flex flex-col items-center justify-center w-full p-5">
               url: {imageUrl}
-              <p className="mt-4 text-xs text-gray-700">status: success</p>
+              {/* <p className="mt-4 text-xs text-gray-700">status: success</p> */}
             </div>
           </div>
         )}

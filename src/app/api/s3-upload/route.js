@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
-/* eslint-disable */
 const s3Client = new S3Client({
     region: process.env.S3_UPLOAD_REGION,
     credentials: {
@@ -9,9 +8,8 @@ const s3Client = new S3Client({
         secretAccessKey: process.env.S3_UPLOAD_SECRET,
     }
 })
-/* eslint-disable */
 
-async function uploadFileToS3(file: any, fileName: any) {
+async function uploadFileToS3(file, fileName) {
 
     const fileBuffer = file;
 
@@ -27,7 +25,7 @@ async function uploadFileToS3(file: any, fileName: any) {
     return fileName;
 }
 
-export async function POST(request: any) {
+export async function POST(request) {
     try {
 
         const formData = await request.formData();
