@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   const prediction = await replicate.predictions.create({
     version: "06db33e3cd56700e2b0de541e65e2fc377604bebc97eb87b40e1d190fafa7ef4",
     input: input,
-  });
+  })
 
   if (prediction?.error) {
     return new Response(

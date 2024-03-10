@@ -3,7 +3,6 @@
 import { useState } from "react"
 import Image from "next/image"
 import { Prediction } from "replicate"
-// import { VisionFormData } from "./types"
 import { convertStringToCharacterObject, sleep } from "./utils/utils"
 import UploadComponent from "./components/upload"
 import Selector from "./components/select";
@@ -13,16 +12,140 @@ import { Button, Container, Divider, Grid, GridColumn, GridRow, Segment } from "
 
 export default function Home() {
 
-  // const [file, setFile] = useState<File>()
   const [generationError, setGenerationError] = useState(null)
-  // const [formData, setFormData] = useState<VisionFormData>({ image: "", prompt: "", max_tokens: 1024, temperature: 0.2, top_p: 1 })
   const [prediction, setPrediction] = useState<Prediction | null>(null)
-  // const [filePath, setFilePath] = useState<string | null>(null)
-  // const [visionResponse, setVisionResponse] = useState<string | null>(null)
   const [characterAttributes, setCharacterAttributes] = useState<string | null>(null)
   const [ageSelected, setAgeSelected] = useState<string>("5")
   const [genderSelected, setGenderSelected] = useState<string | null>(null)
   const [lastPrompt, setLastPrompt] = useState<string>("")
+
+  
+  const handleDiffusionModelGeneration = async (generationPrompt: string) => {
+
+    const data = new FormData()
+    data.append('prompt', generationPrompt)
+    data.append('num_outputs', "4")
+
+    console.log('CHECK PROMPT :>> ', generationPrompt)
+
+    const response = await fetch("/api/bluepencilxl", { method: "POST", body: data })
+
+    let prediction = await response.json()
+    if (response.status !== 201) {
+      setGenerationError(prediction.detail)
+      return
+    }
+    setPrediction(prediction)
+
+    while (
+      prediction.status !== "succeeded" &&
+      prediction.status !== "failed"
+    ) {
+      await sleep(1000);
+      const response = await fetch("/api/predictions/" + prediction.id, { cache: 'no-store' })
+      prediction = await response.json()
+      if (response.status !== 200) {
+        setGenerationError(prediction.detail)
+        return;
+      }
+      setPrediction(prediction)
+    }
+  }
+
+  const handleSubmitGPT4Vision = async (url: string) => {
+    const reqFormData = new FormData()
+    reqFormData.append('url',url)
+
+    const response = await fetch("/api/openai", { method: "POST", body: reqFormData })
+
+    let aiResponse = await response.json()
+    console.log('Extracted Data :>> ', aiResponse?.choices[0]?.message?.content)
+    setCharacterAttributes(aiResponse?.choices[0]?.message?.content)
+    if (aiResponse?.choices[0]?.message?.content?.length) {
+      const characterDataObject = convertStringToCharacterObject(aiResponse?.choices[0]?.message?.content)
+      const prompt = `Create a series of images featuring a ${ageSelected} years old ${genderSelected !== null ?  genderSelected : "boy"} character in multiple poses and expressions, viewed from the front. The character design should be in the Pixar animation style, emphasizing simplicity and cuteness. The character should have ${characterDataObject.eyesColor !== undefined && characterDataObject.eyesColor !== "Not Visible" ? characterDataObject.eyesColor.toLowerCase() : "brown"} eyes,${characterDataObject.glassesBoolean.toString().toLowerCase() !== 'false' ? " wearing glasses," : ""} ${characterDataObject.hairColor.toLowerCase()} hair, ${characterDataObject.skinTone} skin tone and be dressed in ${characterDataObject.clothesColor !== undefined && characterDataObject.clothesColor !== "Not Visible" ? characterDataObject.clothesColor : "neutral"} clothes. Each pose and expression should convey a different emotion or action, showcasing the character's versatility and charm. Ensure the background is white. Ensure the images are full color and adhere to a 16:9 aspect ratio, capturing the essence of a lively and adorable Pixar-styled character.`
+
+      setLastPrompt(prompt)
+      handleDiffusionModelGeneration(prompt)
+    }
+  }
+
+  const handleSelectAge = (e: any, { value }: any) => setAgeSelected(value)
+  const handleSelectGender = (e: any, { value }: any) => setGenderSelected(value)
+  
+
+  return (
+  <main>
+
+      <Container style={{padding: '10px'}}>
+        <Segment>
+        <Grid columns={2} stackable textAlign='center' verticalAlign='middle'>
+          <GridRow>
+            <GridColumn>
+              <Selector options={ageOptions} selection={handleSelectAge} placeholder="Select Age" />
+              <Selector options={genderOptions} selection={handleSelectGender} placeholder="Select Gender" />
+            </GridColumn>
+            <GridColumn>
+              <UploadComponent urlString={handleSubmitGPT4Vision} />
+            </GridColumn>
+          </GridRow>
+        </Grid>
+      </Segment>
+        </Container>
+        
+      {characterAttributes?.length && (
+        <Container style={{ padding: '10px' }}>
+          <Segment>
+            <p>{characterAttributes}</p>
+          </Segment>
+        </Container>)}
+
+        
+    {prediction?.output?.[0] && (<Container style={{padding: '10px'}}>
+        <Button
+          type='button'
+          content='Redo'
+          icon='redo'
+          labelPosition='right'
+          onClick={() => handleDiffusionModelGeneration(lastPrompt)}
+        />
+    </Container>)}
+      
+    {prediction && (
+          <Container style={{padding: '10px'}}>
+            <p>status: {prediction.status}</p>
+              {prediction?.output?.[0] && (
+                <Segment textAlign='center'>
+                    {prediction.output?.[0] && (<Image src={prediction.output[0]} alt="output-1" width={250} height={250} />)}
+                    {prediction.output?.[1] && (<Image src={prediction.output[1]} alt="output-2" width={250} height={250} />)}
+                    <Divider fitted />
+                    {prediction.output?.[2] && (<Image src={prediction.output[2]} alt="output-3" width={250} height={250} />)}
+                    {prediction.output?.[3] && (<Image src={prediction.output[3]} alt="output-4" width={250} height={250} />)}
+                </Segment>)}
+        </Container>)}
+      
+  </main>
+  )
+}
+
+
+
+
+
+
+
+
+
+  // const [formData, setFormData] = useState<VisionFormData>({ image: "", prompt: "", max_tokens: 1024, temperature: 0.2, top_p: 1 })
+
+  // const [filePath, setFilePath] = useState<string | null>(null)
+  // const [visionResponse, setVisionResponse] = useState<string | null>(null)
+
+  // import { VisionFormData } from "./types"
+  // const [file, setFile] = useState<File>()
+
+
+
 
 
   // const handleSubmitSDXLForm = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -103,116 +226,6 @@ export default function Home() {
   //     console.error(error)
   //   }
   // }
-  
-  const handleDiffusionModelGeneration = async (generationPrompt: string) => {
-
-    const data = new FormData()
-    data.append('prompt', generationPrompt)
-    data.append('num_outputs', "4")
-
-    console.log('CHECK PROMPT :>> ', generationPrompt)
-
-    const response = await fetch("/api/bluepencilxl", { method: "POST", body: data })
-
-    let prediction = await response.json()
-    if (response.status !== 201) {
-      setGenerationError(prediction.detail)
-      return
-    }
-    setPrediction(prediction)
-
-    while (
-      prediction.status !== "succeeded" &&
-      prediction.status !== "failed"
-    ) {
-      await sleep(1000);
-      const response = await fetch("/api/predictions/" + prediction.id, { cache: 'no-store' })
-      prediction = await response.json()
-      if (response.status !== 200) {
-        setGenerationError(prediction.detail)
-        return;
-      }
-      setPrediction(prediction)
-    }
-  }
-
-  const handleSubmitGPT4Vision = async (url: string) => {
-    const reqFormData = new FormData()
-    reqFormData.append('url',url)
-
-    const response = await fetch("/api/openai", { method: "POST", body: reqFormData })
-
-    let aiResponse = await response.json()
-    console.log('Extracted Data :>> ', aiResponse?.choices[0]?.message?.content)
-    setCharacterAttributes(aiResponse?.choices[0]?.message?.content)
-    if (aiResponse?.choices[0]?.message?.content?.length) {
-      const characterDataObject = convertStringToCharacterObject(aiResponse?.choices[0]?.message?.content)
-      const prompt = `Create a series of images featuring a ${ageSelected} years old ${genderSelected !== null ?  genderSelected : "boy"} character in multiple poses and expressions, viewed from the front. The character design should be in the Pixar animation style, emphasizing simplicity and cuteness. The character should have ${characterDataObject.eyesColor !== undefined && characterDataObject.eyesColor !== "Not Visible" ? characterDataObject.eyesColor.toLowerCase() : "brown"} eyes,${characterDataObject.glassesBoolean.toString().toLowerCase() !== 'false' ? " wearing glasses," : ""} ${characterDataObject.hairColor.toLowerCase()} hair, ${characterDataObject.skinTone} skin tone and be dressed in ${characterDataObject.clothesColor !== undefined && characterDataObject.clothesColor !== "Not Visible" ? characterDataObject.clothesColor : "neutral"} clothes. Each pose and expression should convey a different emotion or action, showcasing the character's versatility and charm. Ensure the background is white. Ensure the images are full color and adhere to a 16:9 aspect ratio, capturing the essence of a lively and adorable Pixar-styled character.`
-
-      setLastPrompt(prompt)
-      handleDiffusionModelGeneration(prompt)
-    }
-  }
-
-  const handleSelectAge = (e: any, { value }: any) => setAgeSelected(value)
-  const handleSelectGender = (e: any, { value }: any) => setGenderSelected(value)
-  
-
-  return (
-  <main>
-
-    {/* <Container> */}
-      <Container style={{padding: '10px'}}>
-        <Segment>
-        <Grid columns={2} stackable textAlign='center' verticalAlign='middle'>
-          <GridRow>
-            <GridColumn>
-              <Selector options={ageOptions} selection={handleSelectAge} placeholder="Select Age" />
-              <Selector options={genderOptions} selection={handleSelectGender} placeholder="Select Gender" />
-            </GridColumn>
-            <GridColumn>
-              <UploadComponent urlString={handleSubmitGPT4Vision} />
-            </GridColumn>
-          </GridRow>
-        </Grid>
-      </Segment>
-        </Container>
-        
-      {characterAttributes?.length && (
-        <Container style={{ padding: '10px' }}>
-          <Segment>
-            <p>{characterAttributes}</p>
-          </Segment>
-        </Container>)}
-
-        
-    {prediction?.output?.[0] && (<Container style={{padding: '10px'}}>
-        <Button
-          type='button'
-          content='Redo'
-          icon='redo'
-          labelPosition='right'
-          onClick={() => handleDiffusionModelGeneration(lastPrompt)}
-        />
-    </Container>)}
-      
-    {prediction && (
-          <Container style={{padding: '10px'}}>
-            <p>status: {prediction.status}</p>
-              {prediction?.output?.[0] && (
-                <Segment textAlign='center'>
-                    {prediction.output?.[0] && (<Image src={prediction.output[0]} alt="output-1" width={250} height={250} />)}
-                    {prediction.output?.[1] && (<Image src={prediction.output[1]} alt="output-2" width={250} height={250} />)}
-                    <Divider fitted />
-                    {prediction.output?.[2] && (<Image src={prediction.output[2]} alt="output-3" width={250} height={250} />)}
-                    {prediction.output?.[3] && (<Image src={prediction.output[3]} alt="output-4" width={250} height={250} />)}
-                </Segment>)}
-        </Container>)}
-      
-    {/* </Container> */}
-  </main>
-  )
-}
 
 
 
