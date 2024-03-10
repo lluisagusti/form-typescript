@@ -1,22 +1,22 @@
 "use client";
 
-import Image from "next/image";
-import { useState } from "react";
-import { Button, Grid, GridColumn, GridRow, Input } from "semantic-ui-react";
+import Image from "next/image"
+import { useState } from "react"
+import { Button, Grid, GridColumn, GridRow, Input } from "semantic-ui-react"
 
 const UploadForm = ({ urlString }: any) => {
   const [file, setFile] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false)
+  const [imageUrl, setImageUrl] = useState<string | null>(null)
 
   const handleFileChange = (e: any) => {
-    setFile(e.target.files[0]);
+    setFile(e.target.files[0])
     setImageUrl(null)
   };
 
   const handleSubmit = async (e: any) => {
-    e.preventDefault();
-    if (!file) return;
+    e.preventDefault()
+    if (!file) return
 
     setUploading(true);
     const formData = new FormData();
@@ -25,55 +25,45 @@ const UploadForm = ({ urlString }: any) => {
     try {
       const response = await fetch("/api/s3-upload", {
         method: "POST",
-        body: formData,
+        body: formData
       });
 
       const data: any = await response.json();
       const { url } = data
       setImageUrl(url)
-      setUploading(false);
+      setUploading(false)
       urlString(url)
     } catch (error) {
-      console.log(error);
-      setUploading(false);
+      console.log(error)
+      setUploading(false)
     }
   }  
 
   return (
     <>
-      {/* <h1 className="text-black">Upload Files to S3 Bucket</h1> */}
+      
+      {!imageUrl?.length && <div className="text-black p-5">
+            <Grid columns={1} textAlign='center'>
+              <GridRow verticalAlign='middle'>
+                <Input type="file" onChange={handleFileChange} />
+                <Button onClick={handleSubmit} disabled={!file || uploading} >{uploading ? "Uploading..." : "Upload"}</Button>
+              </GridRow>
+            </Grid>
+          </div>}
 
-      {!imageUrl?.length && (<div className="text-black p-5">
-        {/* <input type="file" accept="image/*" onChange={handleFileChange} /> */}
-        <Grid columns={1} stackable textAlign='center'>
-      {/* <Divider vertical>Or</Divider> */}
-
-      <GridRow verticalAlign='middle'>
-        <Input type="file" onChange={handleFileChange} />
-        <Button onClick={handleSubmit} disabled={!file || uploading} >{uploading ? "Uploading..." : "Upload"}</Button>
-        {/* <button className="ui button p-5" type="submit" disabled={!file || uploading}>
-          {uploading ? "Uploading..." : "Upload"}
-        </button> */}</GridRow></Grid>
-      </div>)}
-
-      {imageUrl?.length && (
-          <div className="mt-4, text-black">
+      {imageUrl?.length && <div className="mt-4, text-black">
               <div className="flex flex-col items-center justify-center w-full">
                 <Image
                   src={imageUrl?.toString()}
                   alt="output"
                   width={250}
                   height={250}
-                  className="object-cover w-full h-full rounded-md border-gray-300"
                 />
               </div>
-              {/* <div className="flex flex-col items-center justify-center w-full p-5">
-              url: {imageUrl}
-            </div> */}
-          </div>
-        )}
+          </div>}
+      
     </>
   );
 };
 
-export default UploadForm;
+export default UploadForm

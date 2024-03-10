@@ -20,3 +20,15 @@ export const genderOptions = [
     { key: 'girl', value: 'girl', text: 'Girl' },
     { key: 'boy', value: 'boy', text: 'Boy' }
 ]
+
+export const styleOptions = [
+    { key: 'anime', value: 'anime', text: 'Anime' },
+    { key: 'pixar', value: 'pixar', text: 'Pixar' },
+    { key: 'cubism', value: 'cubism', text: 'Cubism' },
+    { key: 'surrealism', value: 'surrealism', text: 'Surrealism' },
+    { key: 'popart', value: 'popart', text: 'Popart' },
+    { key: 'impressionism', value: 'impressionism', text: 'Impressionism' },
+    { key: 'renaissance', value: 'renaissance', text: 'Renaissance' },
+    { key: 'expressionism', value: 'expressionism', text: 'Expressionism' },
+    { key: 'fauvism', value: 'fauvism', text: 'Fauvism' }
+]
