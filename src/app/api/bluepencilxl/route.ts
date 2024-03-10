@@ -8,16 +8,15 @@ export async function POST(req: Request) {
 
   const data = await req.formData()
   const prompt = data.get("prompt")
+  // const num_outputs = data.get("num_outputs")
+
   if (!process.env.REPLICATE_API_TOKEN) {
     throw new Error(
       "The REPLICATE_API_TOKEN environment variable is not set. See README.md for instructions on how to set it."
     );
   }
 
-  const input = {
-    // image: "https://replicate.delivery/pbxt/KSvbd6jO4nZIP5JCyhV6Dvf440hbmtocuQtPbp9pGJezFAzO/IMG_4652%20-%20restored.jpg",
-    prompt: prompt
-  }
+  const input = { prompt: prompt, num_outputs: 4 }
 
   console.log('PROMPT @ API >>>>>>>>>>>>>>>>>>>> ', input)
 

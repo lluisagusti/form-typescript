@@ -21,7 +21,7 @@ export async function POST(req: any) {
                 content: [
                     {
                         type: "text",
-                        text: "What are the colors of the clothes, hair, eyes, skin tone, age and face shape? Your response will be: Hair:[hair color], Eyes:[eyes color], Skin:[skin tone], Clothes: [clothes color], Age: [age], FaceShape: [face shape]"
+                        text: "You will respond with the following information about the image: Hair:[hair color], Glasses: [glasses ? true : false], Eyes:[eyes color], Clothes: [clothes color], Skin:[skin tone], FaceShape: [face shape]"
                     },
                     {
                         type: "image_url",

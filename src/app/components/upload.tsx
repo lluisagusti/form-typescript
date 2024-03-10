@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { Button, Grid, GridColumn, GridRow, Input } from "semantic-ui-react";
 
 const UploadForm = ({ urlString }: any) => {
   const [file, setFile] = useState(null);
@@ -42,12 +43,18 @@ const UploadForm = ({ urlString }: any) => {
     <>
       {/* <h1 className="text-black">Upload Files to S3 Bucket</h1> */}
 
-      {!imageUrl?.length && (<form onSubmit={handleSubmit} className="text-black p-5">
-        <input type="file" accept="image/*" onChange={handleFileChange} />
-        <button className="ui button" type="submit" disabled={!file || uploading}>
+      {!imageUrl?.length && (<div className="text-black p-5">
+        {/* <input type="file" accept="image/*" onChange={handleFileChange} /> */}
+        <Grid columns={1} stackable textAlign='center'>
+      {/* <Divider vertical>Or</Divider> */}
+
+      <GridRow verticalAlign='middle'>
+        <Input type="file" onChange={handleFileChange} />
+        <Button onClick={handleSubmit} disabled={!file || uploading} >{uploading ? "Uploading..." : "Upload"}</Button>
+        {/* <button className="ui button p-5" type="submit" disabled={!file || uploading}>
           {uploading ? "Uploading..." : "Upload"}
-        </button>
-      </form>)}
+        </button> */}</GridRow></Grid>
+      </div>)}
 
       {imageUrl?.length && (
           <div className="mt-4, text-black">
@@ -60,10 +67,9 @@ const UploadForm = ({ urlString }: any) => {
                   className="object-cover w-full h-full rounded-md border-gray-300"
                 />
               </div>
-              <div className="flex flex-col items-center justify-center w-full p-5">
+              {/* <div className="flex flex-col items-center justify-center w-full p-5">
               url: {imageUrl}
-              {/* <p className="mt-4 text-xs text-gray-700">status: success</p> */}
-            </div>
+            </div> */}
           </div>
         )}
     </>
