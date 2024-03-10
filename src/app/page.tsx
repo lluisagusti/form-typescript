@@ -44,7 +44,7 @@ export default function Home() {
       prediction.status !== "succeeded" &&
       prediction.status !== "failed"
     ) {
-      await sleep(1000);
+      await sleep(4000)
       const response = await fetch("/api/predictions/" + prediction.id, { cache: 'no-store' })
       prediction = await response.json()
       if (response.status !== 200) {
@@ -99,18 +99,10 @@ export default function Home() {
 
       <Container style={{padding: '10px'}}>
         <Segment>
-          <Grid columns={2} stackable textAlign='center' verticalAlign='middle'>
-            <GridRow>
-              <GridColumn textAlign="center">
-                <Selector options={ageOptions} selection={handleSelectAge} placeholder="Select Age" />
-                <Selector options={genderOptions} selection={handleSelectGender} placeholder="Select Gender" />
-                <Selector options={styleOptions} selection={handleSelectStyle} placeholder="Select Style" />
-              </GridColumn>
-              <GridColumn>
-                <UploadComponent urlString={handleSubmitGPT4Vision} />
-              </GridColumn>
-            </GridRow>
-          </Grid>
+          <Selector options={ageOptions} selection={handleSelectAge} placeholder="Select Age" />
+          <Selector options={styleOptions} selection={handleSelectStyle} placeholder="Select Style" />
+          <Selector options={genderOptions} selection={handleSelectGender} placeholder="Select Gender" />
+        <UploadComponent urlString={handleSubmitGPT4Vision} />
         </Segment>
       </Container>
 
