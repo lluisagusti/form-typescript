@@ -8,7 +8,7 @@ export async function POST(req: Request) {
 
   const data = await req.formData()
   const prompt = data.get("prompt")
-  // const num_outputs = data.get("num_outputs")
+  const num_outputs = data.get("num_outputs")
 
   if (!process.env.REPLICATE_API_TOKEN) {
     throw new Error(
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const input = { prompt: prompt, num_outputs: 4 }
+  const input = { prompt: prompt, num_outputs: Number(num_outputs) }
 
   console.log('PROMPT @ API >>>>>>>>>>>>>>>>>>>> ', input)
 

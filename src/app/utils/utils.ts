@@ -8,9 +8,9 @@ export const convertStringToCharacterObject = (input: string) => {
         let [originalKey, value] = pair.split(': ')
         let mappedKey = keyMap[originalKey]
         if (mappedKey) {
-            values[mappedKey] = value
+            values[mappedKey] = value?.toString()?.toLowerCase()
         }
-    });
+    })
 
     return values
 }

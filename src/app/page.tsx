@@ -16,7 +16,7 @@ export default function Home() {
   const [prediction, setPrediction] = useState<Prediction | null>(null)
   const [characterAttributes, setCharacterAttributes] = useState<string | null>(null)
   const [ageSelected, setAgeSelected] = useState<string>("5")
-  const [genderSelected, setGenderSelected] = useState<string | null>(null)
+  const [genderSelected, setGenderSelected] = useState<string>("boy")
   const [lastPrompt, setLastPrompt] = useState<string>("")
 
   
@@ -59,11 +59,11 @@ export default function Home() {
     const response = await fetch("/api/openai", { method: "POST", body: reqFormData })
 
     let aiResponse = await response.json()
-    console.log('Extracted Data :>> ', aiResponse?.choices[0]?.message?.content)
+    console.log('LOG (Extracted Data) :>> ', aiResponse?.choices[0]?.message?.content)
     setCharacterAttributes(aiResponse?.choices[0]?.message?.content)
     if (aiResponse?.choices[0]?.message?.content?.length) {
       const characterDataObject = convertStringToCharacterObject(aiResponse?.choices[0]?.message?.content)
-      const prompt = `Create a series of images featuring a ${ageSelected} years old ${genderSelected !== null ?  genderSelected : "boy"} character in multiple poses and expressions, viewed from the front. The character design should be in the Pixar animation style, emphasizing simplicity and cuteness. The character should have ${characterDataObject.eyesColor !== undefined && characterDataObject.eyesColor !== "Not Visible" ? characterDataObject.eyesColor.toLowerCase() : "brown"} eyes,${characterDataObject.glassesBoolean.toString().toLowerCase() !== 'false' ? " wearing glasses," : ""} ${characterDataObject.hairColor.toLowerCase()} hair, ${characterDataObject.skinTone} skin tone and be dressed in ${characterDataObject.clothesColor !== undefined && characterDataObject.clothesColor !== "Not Visible" ? characterDataObject.clothesColor : "neutral"} clothes. Each pose and expression should convey a different emotion or action, showcasing the character's versatility and charm. Ensure the background is white. Ensure the images are full color and adhere to a 16:9 aspect ratio, capturing the essence of a lively and adorable Pixar-styled character.`
+      const prompt = `Create a series of images featuring a ${ageSelected} years old ${genderSelected} character in multiple poses and expressions, viewed from the front. The character design should be in the anime animation style, emphasizing simplicity and cuteness. The character should have ${characterDataObject.eyesColor !== undefined && !characterDataObject.eyesColor.toLowerCase().includes("visible") && !characterDataObject.eyesColor.toLowerCase().includes("determine") ? characterDataObject.eyesColor.toLowerCase() : "brown"} eyes,${characterDataObject.glassesBoolean.toString().toLowerCase() !== 'false' ? " wearing glasses," : ""} ${characterDataObject.hairColor.toLowerCase() === 'salt and pepper' ? 'grey' : characterDataObject.hairColor.toLowerCase()} hair, ${characterDataObject.skinTone} skin tone and be dressed in ${characterDataObject?.clothesColor?.toLowerCase() != undefined && !characterDataObject.clothesColor.toLowerCase().includes("visible") && !characterDataObject.clothesColor.toLowerCase().includes("determine") ? characterDataObject.clothesColor.toLowerCase() : "neutral"} clothes. Each pose and expression should convey a different emotion or action, showcasing the character's versatility and charm. Ensure the images are full color and adhere to a 16:9 aspect ratio, and have white background capturing the essence of a lively and adorable anime-styled character.`
 
       setLastPrompt(prompt)
       handleDiffusionModelGeneration(prompt)
@@ -75,24 +75,25 @@ export default function Home() {
   
 
   return (
-  <main>
+    <main>
 
       <Container style={{padding: '10px'}}>
         <Segment>
-        <Grid columns={2} stackable textAlign='center' verticalAlign='middle'>
-          <GridRow>
-            <GridColumn>
-              <Selector options={ageOptions} selection={handleSelectAge} placeholder="Select Age" />
-              <Selector options={genderOptions} selection={handleSelectGender} placeholder="Select Gender" />
-            </GridColumn>
-            <GridColumn>
-              <UploadComponent urlString={handleSubmitGPT4Vision} />
-            </GridColumn>
-          </GridRow>
-        </Grid>
-      </Segment>
-        </Container>
-        
+          <Grid columns={2} stackable textAlign='center' verticalAlign='middle'>
+            <GridRow>
+              <GridColumn>
+                <Selector options={ageOptions} selection={handleSelectAge} placeholder="Select Age" />
+                <Selector options={genderOptions} selection={handleSelectGender} placeholder="Select Gender" />
+              </GridColumn>
+              <GridColumn>
+                <UploadComponent urlString={handleSubmitGPT4Vision} />
+              </GridColumn>
+            </GridRow>
+          </Grid>
+        </Segment>
+      </Container>
+
+
       {characterAttributes?.length && (
         <Container style={{ padding: '10px' }}>
           <Segment>
@@ -101,30 +102,25 @@ export default function Home() {
         </Container>)}
 
         
-    {prediction?.output?.[0] && (<Container style={{padding: '10px'}}>
-        <Button
-          type='button'
-          content='Redo'
-          icon='redo'
-          labelPosition='right'
-          onClick={() => handleDiffusionModelGeneration(lastPrompt)}
-        />
-    </Container>)}
-      
-    {prediction && (
-          <Container style={{padding: '10px'}}>
-            <p>status: {prediction.status}</p>
-              {prediction?.output?.[0] && (
-                <Segment textAlign='center'>
-                    {prediction.output?.[0] && (<Image src={prediction.output[0]} alt="output-1" width={250} height={250} />)}
-                    {prediction.output?.[1] && (<Image src={prediction.output[1]} alt="output-2" width={250} height={250} />)}
-                    <Divider fitted />
-                    {prediction.output?.[2] && (<Image src={prediction.output[2]} alt="output-3" width={250} height={250} />)}
-                    {prediction.output?.[3] && (<Image src={prediction.output[3]} alt="output-4" width={250} height={250} />)}
-                </Segment>)}
+      {prediction?.output?.[0] && (<Container style={{padding: '10px'}}>
+          <Button onClick={() => handleDiffusionModelGeneration(lastPrompt)} type='button' content='Redo' icon='redo' labelPosition='right' />
         </Container>)}
+
+
+      {prediction && (
+            <Container style={{padding: '10px'}}>
+                {prediction?.output?.[0] && (
+                  <Segment textAlign='center'>
+                      {prediction.output?.[0] && (<Image src={prediction.output[0]} alt="output-1" width={250} height={250} />)}
+                      {prediction.output?.[1] && (<Image src={prediction.output[1]} alt="output-2" width={250} height={250} />)}
+                    <Divider fitted />
+                      {prediction.output?.[2] && (<Image src={prediction.output[2]} alt="output-3" width={250} height={250} />)}
+                      {prediction.output?.[3] && (<Image src={prediction.output[3]} alt="output-4" width={250} height={250} />)}
+                  </Segment>)}
+                <p>SD Generation Status: {prediction.status}</p>
+            </Container>)}
       
-  </main>
+    </main>
   )
 }
 
@@ -136,13 +132,19 @@ export default function Home() {
 
 
 
+
+
+  // import { VisionFormData } from "./types"
+  
+
+  // const [file, setFile] = useState<File>()
   // const [formData, setFormData] = useState<VisionFormData>({ image: "", prompt: "", max_tokens: 1024, temperature: 0.2, top_p: 1 })
 
   // const [filePath, setFilePath] = useState<string | null>(null)
   // const [visionResponse, setVisionResponse] = useState<string | null>(null)
 
-  // import { VisionFormData } from "./types"
-  // const [file, setFile] = useState<File>()
+
+
 
 
 
@@ -178,10 +180,23 @@ export default function Home() {
   //   }
   // }
 
+
+
+
+
+
+
   // const handleVisionFormData = async (e: any) => {
   //   const { name, value } = e.target;
   //   setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
   // }
+
+
+
+
+
+
+
 
   // const handleSubmitVisionForm = async (e: { preventDefault: () => void; }) => {
   //   e.preventDefault()
@@ -232,6 +247,9 @@ export default function Home() {
 
 
 
+
+
+
       {/* UPLOAD FILE (S3 NEEDED) */}
       {/* <div className="flex flex-col z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex p-10">
         <p className="mb-4 text-lg text-gray-700">
@@ -273,6 +291,14 @@ export default function Home() {
           </div>
         )}
       </div> */}
+
+
+
+      
+
+
+
+
 
 
       {/* VISION: llava-v1.6-vicuna-7b */}
